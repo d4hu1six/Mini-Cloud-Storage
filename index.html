@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiniCloud - Your Personal Drive</title>
+<style>
+  /* ── CSS Variables (Theme System) ── */
+  :root {
+    --bg: #000;
+    --bg2: #080808;
+    --bg3: #0d0d0d;
+    --bg4: #111;
+    --border: #1c1c1c;
+    --border2: #2a2a2a;
+    --border3: #333;
+    --text: #e0e0e0;
+    --text2: #d0d0d0;
+    --text3: #666;
+    --text4: #444;
+    --text5: #555;
+    --accent: #6dce6d;
+    --accent-bg: #0f2b0f;
+    --accent-border: #1d5c1d;
+    --accent-hover: #132e13;
+    --red: #ce6d6d;
+    --red-bg: #2b0f0f;
+    --red-border: #5c1d1d;
+    --red-hover: #2e1313;
+    --star: #c9a000;
+    --folder: #7ab0e0;
+    --transition: all .3s ease;
+  }
+  [data-theme="light"] {
+    --bg: #f0f0f0;
+    --bg2: #fafafa;
+    --bg3: #f5f5f5;
+    --bg4: #ebebeb;
+    --border: #ddd;
+    --border2: #ccc;
+    --border3: #bbb;
+    --text: #1a1a1a;
+    --text2: #2a2a2a;
+    --text3: #888;
+    --text4: #aaa;
+    --text5: #999;
+    --accent: #2a7a2a;
+    --accent-bg: #d4f5d4;
+    --accent-border: #5ab05a;
+    --accent-hover: #c4e8c4;
+    --red: #a03030;
+    --red-bg: #fde8e8;
+    --red-border: #c07070;
+    --red-hover: #f5d0d0;
+    --star: #b08000;
+    --folder: #3a70b0;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh;transition:var(--transition)}
+  a{color:inherit;text-decoration:none}
+  .hidden{display:none!important}
+
+  /* ── Inputs & Buttons ── */
+  input[type=text],input[type=password],input[type=email]{
+    background:var(--bg4);border:1px solid var(--border2);color:var(--text);
+    padding:9px 12px;border-radius:4px;width:100%;outline:none;
+    font-family:'Courier New',monospace;font-size:13px;transition:border .2s,background .3s,color .3s
+  }
+  input:focus{border-color:var(--border3)}
+  button{
+    background:var(--bg4);border:1px solid var(--border3);color:var(--text2);
+    padding:8px 14px;border-radius:4px;cursor:pointer;
+    font-family:'Courier New',monospace;font-size:12px;transition:all .15s
+  }
+  button:hover{background:var(--bg3);border-color:var(--text5)}
+  button:active{transform:scale(.98)}
+  .btn-green{background:var(--accent-bg);border-color:var(--accent-border);color:var(--accent)}
+  .btn-green:hover{background:var(--accent-hover)}
+  .btn-red{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+  .btn-red:hover{background:var(--red-hover)}
+  .btn-icon{padding:4px 8px;font-size:13px;border-color:var(--border)}
+  .btn-share{background:var(--bg4);border-color:#1d4a5c;color:#6db8ce}
+  .btn-share:hover{background:#0d2030}
+  [data-theme="light"] .btn-share{background:#e8f4f8;border-color:#5a9ab0;color:#2a6080}
+  [data-theme="light"] .btn-share:hover{background:#d8ecf5}
+
+  /* ── Cards ── */
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:20px}
+
+  /* ── Auth ── */
+  #auth-screen{max-width:380px;margin:60px auto;padding:16px}
+  .auth-logo{text-align:center;margin-bottom:28px}
+  .auth-logo .icon{font-size:36px;display:block;margin-bottom:6px}
+  .auth-logo h1{font-size:20px;font-weight:normal;color:var(--text);letter-spacing:1px}
+  .auth-logo p{font-size:11px;color:var(--text4);margin-top:3px}
+  .tab-bar{display:flex;border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:20px}
+  .tab-bar button{flex:1;border:none;border-radius:0;padding:9px;font-size:12px;letter-spacing:.5px}
+  .tab-bar button.active{background:var(--bg3);color:var(--text);border-bottom:1px solid var(--border2)}
+  .tab-bar button:not(.active){background:var(--bg2);color:var(--text5)}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:10px;color:var(--text5);letter-spacing:.8px;margin-bottom:4px}
+  .err-msg{font-size:11px;margin-top:8px;text-align:center;min-height:16px}
+  .err{color:var(--red)} .ok{color:var(--accent)}
+
+  /* ── Main Layout ── */
+  #main-screen{padding:14px;max-width:1100px;margin:0 auto}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+  .topbar-left{display:flex;align-items:center;gap:12px}
+  .logo-small{font-size:14px;color:var(--text);letter-spacing:1px}
+  .user-badge{font-size:11px;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-border);padding:3px 10px;border-radius:3px}
+  .topbar-right{display:flex;gap:6px;align-items:center}
+
+  /* ── Theme Toggle ── */
+  .theme-toggle{
+    background:var(--bg4);border:1px solid var(--border3);color:var(--text2);
+    padding:6px 10px;border-radius:4px;cursor:pointer;font-size:14px;
+    transition:all .3s;line-height:1
+  }
+  .theme-toggle:hover{background:var(--bg3);transform:scale(1.05)}
+
+  /* ── Stats ── */
+  .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+  .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:14px}
+  .stat-label{font-size:10px;color:var(--text4);letter-spacing:.8px;margin-bottom:6px}
+  .stat-val{font-size:22px;color:var(--text);font-weight:normal}
+  .storage-bar-wrap{background:var(--bg4);border-radius:2px;height:3px;margin-top:8px}
+  .storage-bar-fill{height:3px;border-radius:2px;transition:width .4s,background .4s}
+  .stat-sub{font-size:10px;color:var(--text4);margin-top:4px}
+
+  /* ── Toolbar ── */
+  .toolbar{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .upload-btn-label{background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);padding:7px 14px;border-radius:4px;cursor:pointer;font-size:12px;font-family:'Courier New',monospace;transition:background .15s}
+  .upload-btn-label:hover{background:var(--accent-hover)}
+  .toolbar-sep{color:var(--border);user-select:none}
+  .toolbar input[type=text]{width:180px;font-size:12px;padding:7px 10px}
+  .toolbar select{background:var(--bg4);border:1px solid var(--border2);color:var(--text2);padding:7px 10px;border-radius:4px;font-size:12px;font-family:'Courier New',monospace;outline:none}
+
+  /* ── View Buttons ── */
+  .view-btn.active{background:var(--bg3);border-color:var(--border2);color:var(--text)}
+
+  /* ── File Table ── */
+  .breadcrumb{font-size:11px;color:var(--text4);margin-bottom:8px;padding:0 2px}
+  .breadcrumb span{cursor:pointer;color:var(--accent)}
+  .file-table{background:var(--bg2);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+  .file-header{display:grid;grid-template-columns:30px 3fr 90px 110px 160px;padding:8px 14px;border-bottom:1px solid var(--bg4);font-size:10px;color:var(--text4);letter-spacing:.6px}
+  .file-row{display:grid;grid-template-columns:30px 3fr 90px 110px 160px;padding:8px 14px;border-bottom:1px solid var(--bg);align-items:center;font-size:12px;transition:background .1s}
+  .file-row:hover{background:var(--bg3)}
+  .file-row:last-child{border-bottom:none}
+  .file-name{display:flex;align-items:center;gap:8px;overflow:hidden}
+  .file-name-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+  .file-name-text.folder{color:var(--folder)}
+  .file-icon{font-size:15px;flex-shrink:0}
+  .star-yes{color:var(--star)}
+  .col-size{color:var(--text5)}
+  .col-date{color:var(--text5)}
+  .col-actions{display:flex;gap:3px;justify-content:flex-end}
+  .empty-state{padding:50px;text-align:center;color:var(--border2);font-size:13px}
+
+  /* ── Share badge ── */
+  .share-badge{font-size:9px;color:#6db8ce;background:#0d2030;border:1px solid #1d4a5c;padding:1px 5px;border-radius:2px;margin-left:4px;vertical-align:middle}
+  [data-theme="light"] .share-badge{color:#2a6080;background:#d8ecf5;border-color:#5a9ab0}
+
+  /* ── Settings ── */
+  #settings-screen{padding:14px;max-width:540px;margin:0 auto}
+  .settings-back{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+  .settings-section{margin-bottom:0;padding-bottom:18px;border-bottom:1px solid var(--border)}
+  .settings-section:last-child{border-bottom:none;padding-bottom:0;margin-bottom:0}
+  .settings-section+.settings-section{padding-top:18px}
+  .section-title{font-size:10px;color:var(--text4);letter-spacing:.8px;margin-bottom:12px}
+
+  /* ── Toast ── */
+  #toast{
+    position:fixed;bottom:20px;right:20px;
+    background:var(--bg3);border:1px solid var(--border2);color:var(--text);
+    padding:10px 18px;border-radius:4px;font-size:12px;z-index:9999;
+    opacity:0;transform:translateY(10px);
+    transition:opacity .25s,transform .25s;pointer-events:none
+  }
+  #toast.show{opacity:1;transform:translateY(0)}
+  #toast.toast-err{border-color:var(--red-border);color:var(--red)}
+  #toast.toast-ok{border-color:var(--accent-border);color:var(--accent)}
+  #toast.toast-info{border-color:#1d4a5c;color:#6db8ce}
+
+  /* ── Confirm Modal ── */
+  #modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000}
+  .modal-box{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:24px;max-width:340px;width:90%;text-align:center}
+  .modal-box h3{color:var(--text);font-size:14px;font-weight:normal;margin-bottom:10px}
+  .modal-box p{font-size:12px;color:var(--text3);margin-bottom:18px;line-height:1.6}
+  .modal-actions{display:flex;gap:8px;justify-content:center}
+
+  /* ── Share Modal ── */
+  #share-modal-bg{
+    position:fixed;inset:0;background:rgba(0,0,0,.85);
+    display:flex;align-items:center;justify-content:center;z-index:1001;
+    opacity:0;transition:opacity .2s;pointer-events:none
+  }
+  #share-modal-bg.open{opacity:1;pointer-events:all}
+  .share-modal{
+    background:var(--bg3);border:1px solid var(--border2);border-radius:8px;
+    padding:24px;max-width:420px;width:92%;
+    transform:translateY(16px);transition:transform .2s
+  }
+  #share-modal-bg.open .share-modal{transform:translateY(0)}
+  .share-modal h3{color:var(--text);font-size:14px;font-weight:normal;margin-bottom:4px;letter-spacing:.5px}
+  .share-modal .share-filename{font-size:11px;color:var(--text4);margin-bottom:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .share-modal .field{margin-bottom:14px}
+  .share-modal .field label{font-size:10px;color:var(--text5);letter-spacing:.8px;display:block;margin-bottom:5px}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg4);border:1px solid var(--border);border-radius:4px}
+  .toggle-row span{font-size:12px;color:var(--text2)}
+  .toggle-switch{position:relative;width:38px;height:20px;cursor:pointer}
+  .toggle-switch input{opacity:0;width:0;height:0}
+  .toggle-slider{position:absolute;inset:0;background:var(--border2);border-radius:20px;transition:.3s}
+  .toggle-slider:before{content:'';position:absolute;height:14px;width:14px;left:3px;top:3px;background:var(--text3);border-radius:50%;transition:.3s}
+  .toggle-switch input:checked + .toggle-slider{background:var(--accent-border)}
+  .toggle-switch input:checked + .toggle-slider:before{transform:translateX(18px);background:var(--accent)}
+  .share-link-box{display:flex;gap:6px;align-items:center}
+  .share-link-box input{flex:1;font-size:11px;color:var(--text4);cursor:text}
+  .share-link-box button{flex-shrink:0;white-space:nowrap}
+  .share-modal-actions{display:flex;gap:8px;margin-top:18px}
+  .share-modal-actions button{flex:1}
+
+  /* ── Password Gate (Public Share Page) ── */
+  #share-gate{max-width:360px;margin:60px auto;padding:16px}
+  .share-gate-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:28px;text-align:center}
+  .share-gate-icon{font-size:40px;margin-bottom:14px}
+  .share-gate-card h2{font-size:16px;font-weight:normal;color:var(--text);margin-bottom:6px}
+  .share-gate-card p{font-size:11px;color:var(--text4);margin-bottom:20px}
+  .share-gate-card .field{text-align:left}
+  .share-gate-card .field label{font-size:10px;color:var(--text5);letter-spacing:.8px;display:block;margin-bottom:5px}
+
+  /* ── Responsive ── */
+  @media(max-width:600px){
+    .file-header,.file-row{grid-template-columns:28px 1fr 100px}
+    .col-size,.col-date{display:none}
+    .stats-grid{grid-template-columns:1fr 1fr}
+    .stats-grid .stat-card:last-child{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- CONFIRM MODAL -->
+<div id="modal-bg" class="hidden">
+  <div class="modal-box">
+    <h3 id="modal-title">Are you sure?</h3>
+    <p id="modal-msg">This action cannot be undone.</p>
+    <div class="modal-actions">
+      <button onclick="modalCancel()">Cancel</button>
+      <button class="btn-red" id="modal-confirm-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div id="share-modal-bg">
+  <div class="share-modal">
+    <h3>&#128279; SHARE FILE</h3>
+    <div class="share-filename" id="share-modal-filename">filename.txt</div>
+
+    <div class="field">
+      <label>VISIBILITY</label>
+      <div class="toggle-row">
+        <span id="share-vis-label">Public — anyone with link can download</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="share-public-toggle" checked onchange="updateShareVisLabel()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>PASSWORD PROTECTION (optional)</label>
+      <input type="password" id="share-password-input" placeholder="Leave empty for no password">
+    </div>
+
+    <div class="field hidden" id="share-link-field">
+      <label>SHAREABLE LINK</label>
+      <div class="share-link-box">
+        <input type="text" id="share-link-val" readonly>
+        <button class="btn-share" onclick="copyShareLink()">Copy</button>
+      </div>
+    </div>
+
+    <div class="share-modal-actions">
+      <button onclick="closeShareModal()">Cancel</button>
+      <button class="btn-green" id="share-generate-btn" onclick="generateShareLink()">Generate Link</button>
+      <button class="btn-red hidden" id="share-revoke-btn" onclick="revokeShareLink()">Revoke</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-logo">
+    <span class="icon">&#9634;</span>
+    <h1>MINICLOUD</h1>
+    <p>simple · secure · yours</p>
+  </div>
+  <div class="card">
+    <div class="tab-bar">
+      <button id="tab-login" class="active" onclick="switchTab('login')">LOGIN</button>
+      <button id="tab-reg" onclick="switchTab('register')">REGISTER</button>
+    </div>
+
+    <!-- Login -->
+    <div id="login-form">
+      <div class="field">
+        <label>USERNAME</label>
+        <input type="text" id="l-user" placeholder="your username" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="field">
+        <label>PASSWORD</label>
+        <input type="password" id="l-pass" placeholder="your password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn-green" onclick="doLogin()" style="width:100%;padding:10px">LOGIN &rarr;</button>
+      <div class="err-msg" id="login-err"></div>
+    </div>
+
+    <!-- Register -->
+    <div id="register-form" class="hidden">
+      <div class="field">
+        <label>USERNAME</label>
+        <input type="text" id="r-user" placeholder="choose a username">
+      </div>
+      <div class="field">
+        <label>EMAIL</label>
+        <input type="email" id="r-email" placeholder="your@email.com">
+      </div>
+      <div class="field">
+        <label>PASSWORD</label>
+        <input type="password" id="r-pass" placeholder="min 6 characters">
+      </div>
+      <button class="btn-green" onclick="doRegister()" style="width:100%;padding:10px">CREATE ACCOUNT</button>
+      <div class="err-msg" id="reg-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN SCREEN -->
+<div id="main-screen" class="hidden">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="logo-small">&#9634; MINICLOUD</span>
+      <span class="user-badge" id="uname-display"></span>
+    </div>
+    <div class="topbar-right">
+      <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Toggle theme"></button>
+      <button onclick="openSettings()">&#9881; Settings</button>
+      <button class="btn-red" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">STORAGE USED</div>
+      <div class="stat-val" id="s-used">0 MB</div>
+      <div class="storage-bar-wrap"><div class="storage-bar-fill" id="s-bar" style="width:0%"></div></div>
+      <div class="stat-sub" id="s-pct">0% of 5 GB</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">FILES</div>
+      <div class="stat-val" id="s-files">0</div>
+      <div class="stat-sub">uploaded</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">FOLDERS</div>
+      <div class="stat-val" id="s-folders">0</div>
+      <div class="stat-sub">created</div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <label class="upload-btn-label">
+      &#8679; Upload
+      <input type="file" id="file-input" multiple style="display:none" onchange="uploadFiles(this.files)">
+    </label>
+    <button onclick="createFolder()">&#128193; Folder</button>
+    <span class="toolbar-sep">|</span>
+    <button class="view-btn active" id="vbtn-all" onclick="setView('all')">All Files</button>
+    <button class="view-btn" id="vbtn-starred" onclick="setView('starred')">&#9733; Starred</button>
+    <button class="view-btn" id="vbtn-trash" onclick="setView('trash')">&#128465; Trash</button>
+    <span class="toolbar-sep">|</span>
+    <input type="text" placeholder="Search files..." oninput="renderFiles()" id="search-input">
+    <select id="sort-select" onchange="renderFiles()">
+      <option value="name">Name</option>
+      <option value="size">Size</option>
+      <option value="date">Date</option>
+      <option value="type">Type</option>
+    </select>
+  </div>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb" id="breadcrumb">
+    <span onclick="navRoot()">/ root</span>
+  </div>
+
+  <!-- File Table -->
+  <div class="file-table">
+    <div class="file-header">
+      <div></div>
+      <div>NAME</div>
+      <div>SIZE</div>
+      <div>DATE</div>
+      <div style="text-align:right">ACTIONS</div>
+    </div>
+    <div id="file-list"></div>
+    <div id="empty-state" class="empty-state hidden">Nothing here. Upload something!</div>
+  </div>
+</div>
+
+<!-- SETTINGS SCREEN -->
+<div id="settings-screen" class="hidden">
+  <div class="settings-back">
+    <button onclick="closeSettings()">&larr; Back</button>
+    <span style="color:var(--text);font-size:14px">Account Settings</span>
+  </div>
+  <div class="card">
+    <div class="settings-section">
+      <div class="section-title">CHANGE PASSWORD</div>
+      <div class="field"><label>CURRENT PASSWORD</label><input type="password" id="cp-cur" placeholder="current password"></div>
+      <div class="field"><label>NEW PASSWORD</label><input type="password" id="cp-new" placeholder="new password (6+ chars)"></div>
+      <div class="field"><label>CONFIRM NEW</label><input type="password" id="cp-con" placeholder="confirm new password"></div>
+      <button class="btn-green" onclick="changePassword()">Update Password</button>
+      <div class="err-msg" id="cp-msg"></div>
+    </div>
+    <div class="settings-section" style="padding-top:18px">
+      <div class="section-title">STORAGE INFO</div>
+      <div id="settings-storage" style="font-size:12px;color:var(--text3);line-height:1.8"></div>
+    </div>
+    <div class="settings-section" style="padding-top:18px">
+      <div class="section-title">APPEARANCE</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Current theme: <span id="settings-theme-label" style="color:var(--text2)">Dark</span></div>
+      <button onclick="toggleTheme()">Toggle Theme</button>
+    </div>
+    <div class="settings-section" style="padding-top:18px">
+      <div class="section-title">DANGER ZONE</div>
+      <button class="btn-red" onclick="confirmDeleteAccount()">Delete My Account &amp; All Files</button>
+    </div>
+  </div>
+</div>
+
+<!-- PUBLIC SHARE GATE (shown when ?share=TOKEN in URL) -->
+<div id="share-gate" class="hidden">
+  <div class="auth-logo">
+    <span class="icon">&#9634;</span>
+    <h1>MINICLOUD</h1>
+  </div>
+  <div class="share-gate-card">
+    <div class="share-gate-icon">&#128279;</div>
+    <h2 id="gate-filename">Shared File</h2>
+    <p id="gate-desc">Someone shared this file with you.</p>
+    <div class="field hidden" id="gate-pass-field">
+      <label>PASSWORD REQUIRED</label>
+      <input type="password" id="gate-password" placeholder="Enter password" onkeydown="if(event.key==='Enter')gateDownload()">
+      <div class="err-msg" id="gate-err" style="text-align:left;margin-top:6px"></div>
+    </div>
+    <div style="margin-top:18px">
+      <button class="btn-green" onclick="gateDownload()" style="width:100%;padding:10px">&#8681; Download File</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let allFiles = [];
+let currentView = 'all';
+let currentFolder = 'root';
+let folderStack = [];
+let modalCallback = null;
+let shareTargetFile = null;  // file currently being shared
+
+// ─── Theme System ─────────────────────────────────────────────────────────────
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('theme-btn');
+  const label = document.getElementById('settings-theme-label');
+  if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+  if (label) label.textContent = theme === 'dark' ? 'Dark' : 'Light';
+  localStorage.setItem('mc-theme', theme);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+// Apply saved theme immediately on load
+(function() {
+  const saved = localStorage.getItem('mc-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show toast-' + type;
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.className = '', 2800);
+}
+
+// ─── Confirm Modal ────────────────────────────────────────────────────────────
+function confirm2(title, msg, cb) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-msg').textContent = msg;
+  modalCallback = cb;
+  document.getElementById('modal-bg').classList.remove('hidden');
+}
+function modalCancel() { document.getElementById('modal-bg').classList.add('hidden'); modalCallback = null; }
+function modalConfirm() { document.getElementById('modal-bg').classList.add('hidden'); if (modalCallback) modalCallback(); modalCallback = null; }
+document.getElementById('modal-confirm-btn').onclick = modalConfirm;
+
+// ─── API ──────────────────────────────────────────────────────────────────────
+async function api(method, url, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  return r.json();
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+function switchTab(t) {
+  document.getElementById('login-form').classList.toggle('hidden', t !== 'login');
+  document.getElementById('register-form').classList.toggle('hidden', t !== 'register');
+  document.getElementById('tab-login').className = t === 'login' ? 'active' : '';
+  document.getElementById('tab-reg').className = t === 'register' ? 'active' : '';
+}
+
+async function doLogin() {
+  const username = document.getElementById('l-user').value.trim();
+  const password = document.getElementById('l-pass').value;
+  const err = document.getElementById('login-err');
+  err.textContent = '';
+  if (!username || !password) { err.className = 'err-msg err'; err.textContent = 'Fill all fields'; return; }
+  const r = await api('POST', '/api/login', { username, password });
+  if (r.error) { err.className = 'err-msg err'; err.textContent = r.error; return; }
+  enterApp(r.username);
+}
+
+async function doRegister() {
+  const username = document.getElementById('r-user').value.trim();
+  const email = document.getElementById('r-email').value.trim();
+  const password = document.getElementById('r-pass').value;
+  const err = document.getElementById('reg-err');
+  err.textContent = '';
+  if (!username || !email || !password) { err.className = 'err-msg err'; err.textContent = 'Fill all fields'; return; }
+  const r = await api('POST', '/api/register', { username, email, password });
+  if (r.error) { err.className = 'err-msg err'; err.textContent = r.error; return; }
+  err.className = 'err-msg ok'; err.textContent = 'Account created! Logging in...';
+  setTimeout(() => enterApp(r.username), 700);
+}
+
+async function doLogout() {
+  await api('POST', '/api/logout');
+  location.reload();
+}
+
+function enterApp(username) {
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('main-screen').classList.remove('hidden');
+  document.getElementById('uname-display').textContent = username;
+  // Apply correct theme icon after main screen shows
+  const saved = localStorage.getItem('mc-theme') || 'dark';
+  applyTheme(saved);
+  loadFiles();
+}
+
+// ─── Files ────────────────────────────────────────────────────────────────────
+async function loadFiles() {
+  const r = await api('GET', '/api/files');
+  allFiles = r.files || [];
+  updateStats();
+  renderFiles();
+}
+
+function updateStats() {
+  const active = allFiles.filter(f => !f.trashed && f.mimetype !== 'folder');
+  const usedBytes = active.reduce((a, f) => a + (f.size || 0), 0);
+  const pct = Math.min(100, (usedBytes / (5 * 1024 * 1024 * 1024)) * 100);
+  document.getElementById('s-used').textContent = fmtSize(usedBytes);
+  document.getElementById('s-pct').textContent = pct.toFixed(1) + '% of 5 GB';
+  const bar = document.getElementById('s-bar');
+  bar.style.width = pct + '%';
+  bar.style.background = pct > 80 ? 'var(--red-border)' : pct > 60 ? '#5c4f1d' : 'var(--accent-border)';
+  document.getElementById('s-files').textContent = active.length;
+  document.getElementById('s-folders').textContent = allFiles.filter(f => !f.trashed && f.mimetype === 'folder').length;
+  document.getElementById('settings-storage').innerHTML =
+    fmtSize(usedBytes) + ' used<br>' + fmtSize(5 * 1024 * 1024 * 1024 - usedBytes) + ' free<br>' + pct.toFixed(2) + '% used';
+}
+
+function renderFiles() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const sort = document.getElementById('sort-select').value;
+
+  let files = allFiles.filter(f => {
+    if (currentView === 'starred') return f.starred && !f.trashed;
+    if (currentView === 'trash') return f.trashed;
+    return !f.trashed && f.folder === currentFolder;
+  });
+
+  if (search) files = files.filter(f => f.name.toLowerCase().includes(search));
+
+  files.sort((a, b) => {
+    if (sort === 'size') return b.size - a.size;
+    if (sort === 'date') return b.created - a.created;
+    if (sort === 'type') return (a.mimetype || '').localeCompare(b.mimetype || '');
+    return a.name.localeCompare(b.name);
+  });
+
+  const folders = files.filter(f => f.mimetype === 'folder');
+  const fileItems = files.filter(f => f.mimetype !== 'folder');
+  const sorted = [...folders, ...fileItems];
+
+  const list = document.getElementById('file-list');
+  const empty = document.getElementById('empty-state');
+
+  if (sorted.length === 0) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+
+  list.innerHTML = sorted.map(f => `
+  <div class="file-row">
+    <div class="file-icon">${fileIcon(f)}</div>
+    <div class="file-name">
+      <span class="file-name-text ${f.mimetype === 'folder' ? 'folder' : ''}"
+        onclick="${f.mimetype === 'folder' ? `openFolder('${f.id}', '${escQ(f.name)}')` : ''}"
+        title="${esc(f.name)}">${esc(f.name)}</span>
+      ${f.starred ? '<span class="star-yes" style="font-size:11px">&#9733;</span>' : ''}
+      ${f.shareToken ? '<span class="share-badge">shared</span>' : ''}
+    </div>
+    <div class="col-size">${f.mimetype === 'folder' ? '—' : fmtSize(f.size)}</div>
+    <div class="col-date">${fmtDate(f.created)}</div>
+    <div class="col-actions">
+      ${!f.trashed && f.mimetype !== 'folder' ? `<button class="btn-icon" onclick="downloadFile('${f.id}')" title="Download">&#8681;</button>` : ''}
+      ${!f.trashed && f.mimetype !== 'folder' ? `<button class="btn-icon btn-share" onclick="openShareModal('${f.id}')" title="Share">&#128279;</button>` : ''}
+      ${!f.trashed ? `<button class="btn-icon ${f.starred ? 'star-yes' : ''}" onclick="toggleStar('${f.id}')" title="${f.starred ? 'Unstar' : 'Star'}">${f.starred ? '&#9733;' : '&#9734;'}</button>` : ''}
+      ${!f.trashed ? `<button class="btn-icon" onclick="renameFile('${f.id}', '${escQ(f.name)}')" title="Rename">&#9998;</button>` : ''}
+      ${!f.trashed
+        ? `<button class="btn-icon" onclick="trashFile('${f.id}')" title="Move to Trash">&#128465;</button>`
+        : `<button class="btn-icon" onclick="restoreFile('${f.id}')" title="Restore">&#8617;</button>
+           <button class="btn-icon btn-red" onclick="deleteForever('${f.id}', '${escQ(f.name)}')" title="Delete forever">&#10005;</button>`}
+    </div>
+  </div>`).join('');
+}
+
+// ─── File Actions ─────────────────────────────────────────────────────────────
+async function uploadFiles(fileList) {
+  if (!fileList.length) return;
+  const fd = new FormData();
+  for (const f of fileList) fd.append('files', f);
+  fd.append('folder', currentFolder);
+  toast('Uploading...', 'ok');
+  const r = await fetch('/api/upload', { method: 'POST', body: fd });
+  const data = await r.json();
+  if (data.error) { toast(data.error, 'err'); return; }
+  toast(data.files.length + ' file(s) uploaded!', 'ok');
+  document.getElementById('file-input').value = '';
+  loadFiles();
+}
+
+async function createFolder() {
+  const name = prompt('Folder name:');
+  if (!name || !name.trim()) return;
+  const r = await api('POST', '/api/folder', { name: name.trim(), parent: currentFolder });
+  if (r.error) { toast(r.error, 'err'); return; }
+  toast('Folder created!', 'ok');
+  loadFiles();
+}
+
+function downloadFile(id) {
+  window.location.href = '/api/download/' + id;
+}
+
+async function toggleStar(id) {
+  const r = await api('POST', `/api/files/${id}/star`);
+  if (r.error) { toast(r.error, 'err'); return; }
+  const f = allFiles.find(x => x.id === id);
+  if (f) f.starred = r.starred;
+  updateStats(); renderFiles();
+}
+
+async function trashFile(id) {
+  const r = await api('POST', `/api/files/${id}/trash`);
+  if (r.error) { toast(r.error, 'err'); return; }
+  const f = allFiles.find(x => x.id === id);
+  if (f) { f.trashed = true; f.starred = false; }
+  updateStats(); renderFiles();
+  toast('Moved to trash', 'ok');
+}
+
+async function restoreFile(id) {
+  const r = await api('POST', `/api/files/${id}/restore`);
+  if (r.error) { toast(r.error, 'err'); return; }
+  const f = allFiles.find(x => x.id === id);
+  if (f) f.trashed = false;
+  updateStats(); renderFiles();
+  toast('Restored!', 'ok');
+}
+
+function deleteForever(id, name) {
+  confirm2('Delete Forever?', `"${name}" will be permanently deleted.`, async () => {
+    const r = await fetch(`/api/files/${id}`, { method: 'DELETE' });
+    const data = await r.json();
+    if (data.error) { toast(data.error, 'err'); return; }
+    allFiles = allFiles.filter(x => x.id !== id);
+    updateStats(); renderFiles();
+    toast('Deleted permanently', 'ok');
+  });
+}
+
+async function renameFile(id, oldName) {
+  const name = prompt('New name:', oldName);
+  if (!name || name.trim() === oldName) return;
+  const r = await api('POST', `/api/rename/${id}`, { name: name.trim() });
+  if (r.error) { toast(r.error, 'err'); return; }
+  const f = allFiles.find(x => x.id === id);
+  if (f) f.name = name.trim();
+  renderFiles();
+  toast('Renamed!', 'ok');
+}
+
+// ─── Share System ─────────────────────────────────────────────────────────────
+async function openShareModal(fileId) {
+  const f = allFiles.find(x => x.id === fileId);
+  if (!f) return;
+  shareTargetFile = f;
+
+  document.getElementById('share-modal-filename').textContent = f.name;
+  document.getElementById('share-password-input').value = '';
+  document.getElementById('share-public-toggle').checked = true;
+
+  // Check if already shared
+  const existing = await api('GET', `/api/share/info/${fileId}`);
+  const linkField = document.getElementById('share-link-field');
+  const generateBtn = document.getElementById('share-generate-btn');
+  const revokeBtn = document.getElementById('share-revoke-btn');
+
+  if (existing.token) {
+    const url = `${location.origin}/share/${existing.token}`;
+    document.getElementById('share-link-val').value = url;
+    document.getElementById('share-public-toggle').checked = existing.isPublic;
+    linkField.classList.remove('hidden');
+    generateBtn.textContent = 'Update Link';
+    revokeBtn.classList.remove('hidden');
+  } else {
+    linkField.classList.add('hidden');
+    generateBtn.textContent = 'Generate Link';
+    revokeBtn.classList.add('hidden');
+  }
+
+  updateShareVisLabel();
+  document.getElementById('share-modal-bg').classList.add('open');
+}
+
+function closeShareModal() {
+  document.getElementById('share-modal-bg').classList.remove('open');
+  shareTargetFile = null;
+}
+
+function updateShareVisLabel() {
+  const pub = document.getElementById('share-public-toggle').checked;
+  document.getElementById('share-vis-label').textContent = pub
+    ? 'Public — anyone with link can download'
+    : 'Private — link disabled';
+}
+
+async function generateShareLink() {
+  if (!shareTargetFile) return;
+  const isPublic = document.getElementById('share-public-toggle').checked;
+  const password = document.getElementById('share-password-input').value;
+
+  const btn = document.getElementById('share-generate-btn');
+  btn.textContent = 'Generating...';
+  btn.disabled = true;
+
+  const r = await api('POST', '/api/share', {
+    fileId: shareTargetFile.id,
+    isPublic,
+    password: password || null
+  });
+
+  btn.disabled = false;
+  btn.textContent = 'Update Link';
+
+  if (r.error) { toast(r.error, 'err'); return; }
+
+  const url = `${location.origin}/share/${r.token}`;
+  document.getElementById('share-link-val').value = url;
+  document.getElementById('share-link-field').classList.remove('hidden');
+  document.getElementById('share-revoke-btn').classList.remove('hidden');
+
+  // Update local state
+  const f = allFiles.find(x => x.id === shareTargetFile.id);
+  if (f) f.shareToken = r.token;
+  renderFiles();
+  toast('Share link generated!', 'ok');
+}
+
+async function revokeShareLink() {
+  if (!shareTargetFile) return;
+  const r = await api('DELETE', `/api/share/${shareTargetFile.id}`);
+  if (r.error) { toast(r.error, 'err'); return; }
+  document.getElementById('share-link-field').classList.add('hidden');
+  document.getElementById('share-revoke-btn').classList.add('hidden');
+  document.getElementById('share-generate-btn').textContent = 'Generate Link';
+  const f = allFiles.find(x => x.id === shareTargetFile.id);
+  if (f) f.shareToken = null;
+  renderFiles();
+  toast('Share link revoked', 'ok');
+}
+
+async function copyShareLink() {
+  const val = document.getElementById('share-link-val').value;
+  try {
+    await navigator.clipboard.writeText(val);
+    toast('Link copied to clipboard!', 'info');
+  } catch {
+    document.getElementById('share-link-val').select();
+    document.execCommand('copy');
+    toast('Link copied!', 'info');
+  }
+}
+
+// Close share modal on backdrop click
+document.getElementById('share-modal-bg').addEventListener('click', function(e) {
+  if (e.target === this) closeShareModal();
+});
+
+// ─── Public Share Gate ────────────────────────────────────────────────────────
+async function initShareGate(token) {
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('main-screen').classList.add('hidden');
+  document.getElementById('share-gate').classList.remove('hidden');
+
+  const r = await api('GET', `/api/share/public/${token}`);
+  if (r.error) {
+    document.querySelector('.share-gate-card').innerHTML = `
+      <div class="share-gate-icon">&#10060;</div>
+      <h2>Link Not Found</h2>
+      <p style="color:var(--red)">This share link is invalid or has been revoked.</p>
+    `;
+    return;
+  }
+
+  document.getElementById('gate-filename').textContent = r.filename;
+  document.getElementById('gate-desc').textContent = r.hasPassword
+    ? 'This file is password protected.'
+    : 'Click below to download this file.';
+
+  if (r.hasPassword) {
+    document.getElementById('gate-pass-field').classList.remove('hidden');
+  }
+
+  window._shareToken = token;
+}
+
+async function gateDownload() {
+  const token = window._shareToken;
+  const password = document.getElementById('gate-password').value;
+  const err = document.getElementById('gate-err');
+  err.textContent = '';
+
+  // Build download URL with optional password
+  let url = `/api/share/download/${token}`;
+  if (password) {
+    url += `?password=${encodeURIComponent(password)}`;
+  }
+
+  // Try fetch to check for errors first
+  const r = await fetch(url, { method: 'HEAD' }).catch(() => null);
+  if (r && r.status === 401) {
+    err.className = 'err-msg err';
+    err.textContent = 'Incorrect password. Try again.';
+    toast('Wrong password', 'err');
+    return;
+  }
+  if (r && r.status === 403) {
+    err.className = 'err-msg err';
+    err.textContent = 'This link is private or disabled.';
+    toast('Access denied', 'err');
+    return;
+  }
+
+  // Trigger download
+  window.location.href = url;
+}
+
+// ─── Folder Navigation ────────────────────────────────────────────────────────
+function openFolder(id, name) {
+  folderStack.push({ id: currentFolder, name: currentFolder === 'root' ? 'root' : folderStack[folderStack.length - 1]?.name || 'root' });
+  currentFolder = id;
+  currentView = 'all';
+  updateBreadcrumb(name);
+  renderFiles();
+}
+
+function navRoot() {
+  currentFolder = 'root';
+  folderStack = [];
+  updateBreadcrumb(null);
+  renderFiles();
+}
+
+function updateBreadcrumb(folderName) {
+  const bc = document.getElementById('breadcrumb');
+  if (!folderName) { bc.innerHTML = '<span onclick="navRoot()">/ root</span>'; return; }
+  bc.innerHTML = '<span onclick="navRoot()">/ root</span> / ' + esc(folderName);
+}
+
+// ─── Views ────────────────────────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  if (v !== 'all') { currentFolder = 'root'; folderStack = []; updateBreadcrumb(null); }
+  ['all', 'starred', 'trash'].forEach(x => {
+    document.getElementById('vbtn-' + x).classList.toggle('active', x === v);
+  });
+  renderFiles();
+}
+
+// ─── Settings ────────────────────────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('main-screen').classList.add('hidden');
+  document.getElementById('settings-screen').classList.remove('hidden');
+}
+function closeSettings() {
+  document.getElementById('settings-screen').classList.add('hidden');
+  document.getElementById('main-screen').classList.remove('hidden');
+}
+
+async function changePassword() {
+  const cur = document.getElementById('cp-cur').value;
+  const np = document.getElementById('cp-new').value;
+  const con = document.getElementById('cp-con').value;
+  const msg = document.getElementById('cp-msg');
+  msg.textContent = '';
+  if (!cur || !np || !con) { msg.className = 'err-msg err'; msg.textContent = 'Fill all fields'; return; }
+  if (np !== con) { msg.className = 'err-msg err'; msg.textContent = 'Passwords do not match'; return; }
+  const r = await api('POST', '/api/change-password', { current: cur, newpass: np });
+  if (r.error) { msg.className = 'err-msg err'; msg.textContent = r.error; return; }
+  msg.className = 'err-msg ok'; msg.textContent = 'Password updated!';
+  ['cp-cur','cp-new','cp-con'].forEach(id => document.getElementById(id).value = '');
+}
+
+function confirmDeleteAccount() {
+  confirm2('Delete Account?', 'All your files and data will be permanently erased. This cannot be undone.', async () => {
+    const r = await fetch('/api/account', { method: 'DELETE' });
+    const data = await r.json();
+    if (data.error) { toast(data.error, 'err'); return; }
+    location.reload();
+  });
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+function escQ(s) { return String(s).replace(/'/g,"\\'") }
+
+function fileIcon(f) {
+  if (f.mimetype === 'folder') return '&#128193;';
+  const m = f.mimetype || '';
+  if (m.startsWith('image')) return '&#128247;';
+  if (m.startsWith('video')) return '&#127916;';
+  if (m.startsWith('audio')) return '&#127925;';
+  if (m.includes('pdf')) return '&#128196;';
+  if (m.includes('zip') || m.includes('rar') || m.includes('tar')) return '&#128230;';
+  if (m.includes('text') || m.includes('json') || m.includes('xml')) return '&#128196;';
+  if (m.includes('sheet') || m.includes('excel') || m.includes('csv')) return '&#128202;';
+  if (m.includes('presentation') || m.includes('powerpoint')) return '&#128218;';
+  if (m.includes('word') || m.includes('document')) return '&#128209;';
+  return '&#128196;';
+}
+
+function fmtSize(b) {
+  if (!b) return '0 B';
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+  if (b < 1073741824) return (b / 1048576).toFixed(1) + ' MB';
+  return (b / 1073741824).toFixed(2) + ' GB';
+}
+
+function fmtDate(ts) {
+  const d = new Date(ts);
+  return d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+(async () => {
+  // Check if this is a public share link
+  const pathMatch = location.pathname.match(/^\/share\/([a-zA-Z0-9_-]+)$/);
+  if (pathMatch) {
+    initShareGate(pathMatch[1]);
+    return;
+  }
+
+  // Normal app init
+  const r = await api('GET', '/api/me');
+  if (r.loggedIn) {
+    document.getElementById('uname-display').textContent = r.username;
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('main-screen').classList.remove('hidden');
+    const saved = localStorage.getItem('mc-theme') || 'dark';
+    applyTheme(saved);
+    loadFiles();
+  }
+})();
+</script>
+</body>
+</html>
